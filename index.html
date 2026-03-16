@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>News RSS Reader</title>
+<!-- DOMPurify for HTML Sanitization -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
 <style>
 /* ============================================
    DESIGN SYSTEM - Obsidian Terminal
@@ -660,6 +662,14 @@ function escapeHTML(str) {
   }[tag]));
 }
 
+function sanitizeHTML(dirty) {
+  if (!dirty) return '';
+  return DOMPurify.sanitize(dirty, {
+    ALLOWED_TAGS: ['b', 'strong', 'i', 'em', 'u', 's', 'sub', 'sup', 'br', 'a', 'span', 'font'],
+    ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'style', 'color']
+  });
+}
+
 // --- 4. RSS Fetching ---
 async function fetchFeed(url) {
   try {
@@ -737,7 +747,7 @@ async function updateAllFeeds() {
 async function translateDeepL(text) {
   const key = appSettings.keys.deepl;
   if (!key) throw new Error("DeepL API Keyが設定されていません");
-  const url = key.includes(':fx') ? 'https://api-free.deepl.com/v2/translate' : 'https://api.deepl.com/v2/translate';
+  const url = key.includes(':fx') ? 'https://api-free.deepl.com/v2/translate' : 'https://api-deepl.com/v2/translate';
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Authorization': `DeepL-Auth-Key ${key}`, 'Content-Type': 'application/json' },
@@ -949,7 +959,7 @@ async function renderArticles() {
         <span>${dateStr}</span>
       </div>
       <a href="${escapeHTML(article.link)}" target="_blank" rel="noopener">
-        <h3 class="article-title">${escapeHTML(article.title)}${favHTML}</h3>
+        <h3 class="article-title">${sanitizeHTML(article.title)}${favHTML}</h3>
       </a>
       <p class="article-summary">${escapeHTML(article.summary)}</p>
       
